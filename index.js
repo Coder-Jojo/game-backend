@@ -6,6 +6,7 @@ const socketio = require("socket.io");
 const drawing = require("./drawing");
 const manageChats = require("./manageChats");
 const { managePlayers, removePlayer } = require("./managePlayers");
+const manageLobby = require("./manageLobby");
 
 const app = express();
 app.use(express.json());
@@ -34,6 +35,7 @@ io.on("connect", (socket) => {
   drawing(socket, rooms);
   manageChats(socket, players);
   managePlayers(socket, players, rooms);
+  manageLobby(socket, rooms);
 
   socket.on("sendInfo", (room, callback) => {
     console.log(rooms);
