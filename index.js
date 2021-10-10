@@ -33,7 +33,7 @@ io.on("connect", (socket) => {
   //   socket.emit("initialBoardState", arr);
 
   drawing(socket, rooms);
-  manageChats(socket, players);
+  manageChats(socket, rooms);
   managePlayers(socket, players, rooms);
   manageLobby(socket, rooms);
 
@@ -44,8 +44,7 @@ io.on("connect", (socket) => {
 
   socket.on("disconnect", () => {
     console.log(`${socket.id} has disconnected`);
-    removePlayer(socket.id, players);
-    // io.emit("getUsers", userArr);
+    removePlayer(socket, socket.id, players, rooms);
   });
 });
 

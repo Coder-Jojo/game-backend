@@ -26,16 +26,18 @@ const managePlayers = (socket, players, rooms) => {
       gameState: "not started",
       score: [0, 0],
       turn: 0,
-      currentWord: "",
+      currentWord: "jojo",
       turns_left: 16,
     };
     rooms[room] = initialRoomState;
     addPlayer({ id: socket.id, name, room });
     socket.join(room);
     // socket.broadcast.emit("teamsUpdated", rooms[room].players);
-    socket.broadcast.emit("teamsUpdated", rooms[room].players);
-    console.log(rooms[room].players);
-    console.log(players);
+    socket.broadcast.to(room).emit("teamsUpdated", rooms[room].players);
+    socket.emit("teamsUpdated", rooms[room].players);
+
+    // console.log(rooms[room].players);
+    // console.log(players);
     callback(room);
   });
 
@@ -53,8 +55,8 @@ const managePlayers = (socket, players, rooms) => {
     rooms[room].players.push({ name, team: -1, host: false, informer: false });
 
     socket.broadcast.to(player.room).emit("teamsUpdated", rooms[room].players);
-
-    console.log(rooms[room]);
+    socket.emit("teamsUpdated", rooms[room].players);
+    // console.log(rooms[room]);
 
     callback();
   });
@@ -65,11 +67,18 @@ const getPlayer = (id) => players.find((player) => player.id === id);
 const getPlayersInRoom = (room) =>
   players.filter((player) => player.room === room);
 
-const removePlayer = (id, players) => {
-  const index = players.findIndex((player) => player.id === id);
+const removePlayer = (socket, id, players, rooms) => {
+  const index = players?.findIndex((player) => player.id === id);
 
-  if (index !== -1) {
+  if (index !== -1 && index !== undefined) {
     const player = players.splice(index, 1)[0];
+    const room = player.room;
+    const name = player.name;
+    rooms[room].players = rooms[room].players.filter(
+      (player) => player.name !== name
+    );
+    console.log(rooms[room].players);
+    socket.broadcast.to(room).emit("teamsUpdated", rooms[room].players);
 
     return player;
   }
