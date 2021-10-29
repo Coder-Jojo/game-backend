@@ -17,13 +17,19 @@ app.use("/", (req, res) => {
   res.send("server is running!!!!!");
 });
 
-corsOptions = {
-  cors: true,
-  origin: "*",
-};
+// corsOptions = {
+//   cors: true,
+//   origin: "*",
+// };
 
 const server = http.createServer(app);
-const io = socketIO(server, corsOptions);
+const io = socketIO(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
 
 const rooms = [];
 const players = [];
