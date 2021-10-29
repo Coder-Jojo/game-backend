@@ -19,7 +19,7 @@ app.use("/", (req, res) => {
 
 corsOptions = {
   cors: true,
-  origins: "*",
+  origin: "*",
 };
 
 const server = http.createServer(app);
