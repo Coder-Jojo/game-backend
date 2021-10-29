@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require("uuid");
+const { v4: uuid } = require("uuid");
 
 const managePlayers = (socket, players, rooms) => {
   const addPlayer = ({ id, name, room }) => {
@@ -20,14 +20,13 @@ const managePlayers = (socket, players, rooms) => {
   };
 
   socket.on("createRoom", (name, callback) => {
-    const room = uuidv4();
+    const room = uuid();
     const initialRoomState = {
       players: [{ name, team: -1, host: true, informer: false }],
-      gameState: "not started",
+      gameState: "not_started",
       score: [0, 0],
       turn: 0,
-      currentWord: "jojo",
-      turns_left: 16,
+      iteration: 0,
     };
     rooms[room] = initialRoomState;
     addPlayer({ id: socket.id, name, room });
@@ -49,16 +48,28 @@ const managePlayers = (socket, players, rooms) => {
 
     const { error, player } = addPlayer({ id: socket.id, name, room });
 
-    if (error) return callback(error);
+    try {
+      if (error) return callback(error);
+      else {
+        socket.join(room);
+        rooms[room]?.players.push({
+          name,
+          team: -1,
+          host: false,
+          informer: false,
+        });
 
-    socket.join(room);
-    rooms[room].players.push({ name, team: -1, host: false, informer: false });
+        socket.broadcast
+          .to(player.room)
+          .emit("teamsUpdated", rooms[room]?.players);
+        socket.emit("teamsUpdated", rooms[room]?.players);
+        // console.log(rooms[room]);
 
-    socket.broadcast.to(player.room).emit("teamsUpdated", rooms[room].players);
-    socket.emit("teamsUpdated", rooms[room].players);
-    // console.log(rooms[room]);
-
-    callback();
+        callback();
+      }
+    } catch (error) {
+      console.log(error);
+    }
   });
 };
 
@@ -70,17 +81,23 @@ const getPlayersInRoom = (room) =>
 const removePlayer = (socket, id, players, rooms) => {
   const index = players?.findIndex((player) => player.id === id);
 
-  if (index !== -1 && index !== undefined) {
-    const player = players.splice(index, 1)[0];
-    const room = player.room;
-    const name = player.name;
-    rooms[room].players = rooms[room].players.filter(
-      (player) => player.name !== name
-    );
-    console.log(rooms[room].players);
-    socket.broadcast.to(room).emit("teamsUpdated", rooms[room].players);
+  try {
+    if (index !== -1 && index !== undefined) {
+      const player = players.splice(index, 1)[0];
+      const room = player.room;
+      const name = player.name;
+      if (rooms[room] !== undefined) {
+        rooms[room].players = rooms[room]?.players.filter(
+          (player) => player.name !== name
+        );
+      }
+      // console.log(rooms[room].players);
+      socket.broadcast.to(room).emit("teamsUpdated", rooms[room].players);
 
-    return player;
+      return player;
+    }
+  } catch (err) {
+    console.error(err);
   }
 };
 

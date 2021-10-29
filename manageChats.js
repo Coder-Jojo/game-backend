@@ -1,23 +1,95 @@
+const { updateState } = require("./gameStates");
+
 const manageChats = (socket, rooms) => {
   socket.on("sendMessage", ({ name, room, message }) => {
-    const index = rooms[room]?.players.findIndex((a) => a.name === name);
-    if (index !== -1 && index !== undefined) {
-      const player = rooms[room].players[index];
-      const newMessage = {
-        msg: "",
-        type: -1,
-        name: name,
-      };
-      if (message === rooms[room].currentWord) {
-        newMessage.msg = `${name} has guessed the answer correctly!`;
-        newMessage.type = 2;
-        newMessage.name = "";
-      } else {
-        newMessage.msg = message;
-        newMessage.type = player.team;
+    const roomState = rooms[room];
+
+    if (roomState !== undefined) {
+      const player = roomState.players.find((p) => p.name === name);
+
+      if (player !== undefined) {
+        const newMessage = {
+          msg: "",
+          type: -1,
+          name: name,
+        };
+
+        if (
+          roomState.index !== -1 &&
+          message == roomState.wordArr[roomState.index].word
+        ) {
+          if (roomState.turn === 0 && roomState.gameState === "guessing") {
+            if (player.team === 0 && roomState.teams[0].includes(player.name)) {
+              const score = Math.ceil(
+                (roomState.wordArr[roomState.index].difficulty *
+                  roomState.time) /
+                  80
+              );
+              newMessage.msg = `${name} has guessed the answer correctly`;
+              newMessage.type = 2;
+              newMessage.name = "";
+              roomState.score[0] += score;
+
+              updateState(roomState, socket);
+            } else if (
+              player.team === 1 &&
+              roomState.teams[1].includes(player.name)
+            ) {
+              const score = Math.ceil(
+                (roomState.wordArr[roomState.index].difficulty *
+                  roomState.time) /
+                  160
+              );
+              newMessage.msg = `${name} has guessed the answer correctly`;
+              newMessage.type = 2;
+              newMessage.name = "";
+              roomState.score[1] += score;
+              roomState.teams[1] = [];
+            }
+          } else if (
+            roomState.turn === 1 &&
+            roomState.gameState === "guessing"
+          ) {
+            if (player.team === 0 && roomState.teams[0].includes(player.name)) {
+              const score = Math.ceil(
+                (roomState.wordArr[roomState.index].difficulty *
+                  roomState.time) /
+                  160
+              );
+              newMessage.msg = `${name} has guessed the answer correctly`;
+              newMessage.type = 2;
+              newMessage.name = "";
+              roomState.score[0] += score;
+              roomState.teams[0] = [];
+            } else if (
+              player.team === 1 &&
+              roomState.teams[1].includes(player.name)
+            ) {
+              const score = Math.ceil(
+                (roomState.wordArr[roomState.index].difficulty *
+                  roomState.time) /
+                  80
+              );
+              newMessage.msg = `${name} has guessed the answer correctly`;
+              newMessage.type = 2;
+              newMessage.name = "";
+              roomState.score[1] += score;
+
+              updateState(roomState, socket);
+            }
+          }
+        } else {
+          newMessage.msg = message;
+          newMessage.type = player.team;
+        }
+
+        // console.log(roomState.score, roomState.time / 80);
+
+        socket.to(room).emit("getMessage", newMessage);
+        socket.to(room).emit("updateScore", roomState.score);
+        socket.emit("getMessage", newMessage);
+        socket.emit("updateScore", roomState.score);
       }
-      socket.broadcast.to(room).emit("getMessage", newMessage);
-      socket.emit("getMessage", newMessage);
     }
   });
 };

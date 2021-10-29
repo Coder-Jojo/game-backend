@@ -2,11 +2,12 @@ const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
 const http = require("http");
-const socketio = require("socket.io");
+const socketIO = require("socket.io");
 const drawing = require("./drawing");
 const manageChats = require("./manageChats");
 const { managePlayers, removePlayer } = require("./managePlayers");
 const manageLobby = require("./manageLobby");
+const manageGame = require("./manageGame");
 
 const app = express();
 app.use(express.json());
@@ -22,7 +23,7 @@ corsOptions = {
 };
 
 const server = http.createServer(app);
-const io = socketio(server, corsOptions);
+const io = socketIO(server, corsOptions);
 
 const rooms = [];
 const players = [];
@@ -36,6 +37,7 @@ io.on("connect", (socket) => {
   manageChats(socket, rooms);
   managePlayers(socket, players, rooms);
   manageLobby(socket, rooms);
+  manageGame(socket, rooms);
 
   socket.on("sendInfo", (room, callback) => {
     console.log(rooms);
