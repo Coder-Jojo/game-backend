@@ -2,6 +2,16 @@ const getWords = require("./words/getWords");
 
 let timer = null;
 
+const resetBoard = (room, socket) => {
+  socket.to(room).emit("onClear");
+  socket.to(room).emit("onBrushRadius", 5);
+  socket.to(room).emit("onBrushColor", "black");
+
+  socket.emit("onClear");
+  socket.emit("onBrushRadius", 5);
+  socket.emit("onBrushColor", "black");
+};
+
 const goToChoosing = (roomState, socket) => {
   roomState.gameState = "choosing";
   const prevIndex = roomState.index;
@@ -27,19 +37,38 @@ const goToChoosing = (roomState, socket) => {
 
   console.log("choosing");
 
+  if (roomState.iteration > 0) {
+    let word = "";
+    if (prevIndex > -1) {
+      word = roomState.wordArr[prevIndex].word;
+    }
+    socket.to(roomState.room).emit("onShowWord", word);
+    socket.emit("onShowWord", word);
+
+    setTimeout(() => {
+      if (roomState.gameState === "choosing") {
+        socket.to(roomState.room).emit("openCards");
+        socket.emit("openCards");
+      }
+    }, 4500);
+  } else {
+    socket.to(roomState.room).emit("openCards");
+    socket.emit("openCards");
+  }
+
   socket.to(roomState.room).emit("updateTurn", roomState.turn);
   socket.to(roomState.room).emit("setSelected", -1);
   socket.to(roomState.room).emit("resetTime", 80);
   socket.to(roomState.room).emit("updateWordLen", -1);
   socket.to(roomState.room).emit("updateCards", roomState.wordArr);
-  socket.to(roomState.room).emit("openCards");
+  // socket.to(roomState.room).emit("openCards");
 
   socket.emit("updateTurn", roomState.turn);
   socket.emit("updateSelected", -1);
   socket.emit("resetTime", 80);
   socket.emit("updateWordLen", -1);
   socket.emit("updateCards", roomState.wordArr);
-  socket.emit("openCards");
+  // socket.emit("openCards");
 
   const redTeamOp = roomState.players
     .filter((p) => p.team === 0 && p.informer === false)
@@ -50,6 +79,8 @@ const goToChoosing = (roomState, socket) => {
 
   roomState.teams = [redTeamOp, blueTeamOp];
   roomState.prevScore = [roomState.score[0], roomState.score[1]];
+
+  resetBoard(roomState.room, socket);
 };
 
 const goToGuessing = (roomState, socket) => {
@@ -74,7 +105,7 @@ const goToGuessing = (roomState, socket) => {
   setTimeout(() => {
     if (currentIteration === roomState.iteration)
       updateState(roomState, socket);
-  }, 20000);
+  }, 80000);
 };
 
 const goToCreateGame = (roomState, socket, room) => {
@@ -115,14 +146,27 @@ const goToCreateGame = (roomState, socket, room) => {
 
 const goToEnd = (roomState, socket) => {
   console.log("ending game");
+  socket.to(roomState.room).emit("endGame");
+  socket.emit("endGame");
 };
 
 const updateState = (roomState, socket) => {
   if (roomState.gameState === "not_started") goToChoosing(roomState, socket);
   else if (roomState.gameState === "choosing") goToGuessing(roomState, socket);
   else if (roomState.gameState === "guessing") {
-    if (roomState.iteration < 16) goToChoosing(roomState, socket);
-    else goToEnd(roomState, socket);
+    if (roomState.iteration < 15) goToChoosing(roomState, socket);
+    else {
+      let word = "";
+      if (roomState.index > -1) {
+        word = roomState.wordArr[roomState.index].word;
+      }
+      socket.to(roomState.room).emit("onShowWord", word);
+      socket.emit("onShowWord", word);
+      socket.to(roomState.room).emit("resetTime");
+      socket.emit("resetTime");
+      setTimeout(goToEnd, 4000, roomState, socket);
+      // goToEnd(roomState, socket);
+    }
   }
 };
 

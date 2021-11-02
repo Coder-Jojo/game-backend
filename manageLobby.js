@@ -1,7 +1,5 @@
 const manageLobby = (socket, rooms) => {
   socket.on("updateTeams", ({ name, room, color, informer }) => {
-    // console.log(room);
-    // console.log(rooms);
     const index = rooms[room]?.players.findIndex((a) => a.name === name);
 
     if (index !== -1 && index !== undefined) {
@@ -9,12 +7,10 @@ const manageLobby = (socket, rooms) => {
       rooms[room].players[index].informer = informer;
       socket.broadcast.to(room).emit("teamsUpdated", rooms[room].players);
       socket.emit("teamsUpdated", rooms[room].players);
-      // socket.broadcast.emit("teamsUpdated", rooms[room].players);
     }
   });
 
   socket.on("getLobbyStatus", (room, callback) => {
-    // console.log("woasdf");
     callback(rooms[room]?.players);
   });
 
@@ -45,7 +41,7 @@ const manageLobby = (socket, rooms) => {
       if (ply.informer === true && ply.team === 1) blueInformer = true;
     });
 
-    if (redInformer || blueInformer) {
+    if (redInformer && blueInformer) {
       socket.broadcast.to(room).emit("startGame");
       socket.emit("startGame");
       callback();
