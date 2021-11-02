@@ -6,10 +6,12 @@ const resetBoard = (room, socket) => {
   socket.to(room).emit("onClear");
   socket.to(room).emit("onBrushRadius", 5);
   socket.to(room).emit("onBrushColor", "black");
+  socket.to(room).emit("stopDraw");
 
   socket.emit("onClear");
   socket.emit("onBrushRadius", 5);
   socket.emit("onBrushColor", "black");
+  socket.emit("stopDraw");
 };
 
 const goToChoosing = (roomState, socket) => {
@@ -92,8 +94,11 @@ const goToGuessing = (roomState, socket) => {
   socket
     .to(roomState.room)
     .emit("updateWordLen", roomState.wordArr[roomState.index].size);
+  socket.to(roomState.room).emit("startDraw");
+
   socket.emit("closeCards");
   socket.emit("updateWordLen", roomState.wordArr[roomState.index].size);
+  socket.emit("startDraw");
 
   timer = setInterval(() => {
     roomState.time -= 1;
