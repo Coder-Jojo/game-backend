@@ -6,12 +6,10 @@ const resetBoard = (room, socket) => {
   socket.to(room).emit("onClear");
   socket.to(room).emit("onBrushRadius", 5);
   socket.to(room).emit("onBrushColor", "black");
-  socket.to(room).emit("stopDraw");
 
   socket.emit("onClear");
   socket.emit("onBrushRadius", 5);
   socket.emit("onBrushColor", "black");
-  socket.emit("stopDraw");
 };
 
 const goToChoosing = (roomState, socket) => {
@@ -63,6 +61,10 @@ const goToChoosing = (roomState, socket) => {
   socket.to(roomState.room).emit("resetTime", 80);
   socket.to(roomState.room).emit("updateWordLen", -1);
   socket.to(roomState.room).emit("updateCards", roomState.wordArr);
+  socket.to(roomState.room).emit("getMessage", {
+    type: 3,
+    msg: `${roomState.turn === 0 ? "Red" : "Blue"} is choosing...`,
+  });
   // socket.to(roomState.room).emit("openCards");
 
   socket.emit("updateTurn", roomState.turn);
@@ -70,6 +72,10 @@ const goToChoosing = (roomState, socket) => {
   socket.emit("resetTime", 80);
   socket.emit("updateWordLen", -1);
   socket.emit("updateCards", roomState.wordArr);
+  socket.emit("getMessage", {
+    type: 3,
+    msg: `${roomState.turn === 0 ? "Red" : "Blue"} is choosing...`,
+  });
   // socket.emit("openCards");
 
   const redTeamOp = roomState.players
@@ -82,13 +88,16 @@ const goToChoosing = (roomState, socket) => {
   roomState.teams = [redTeamOp, blueTeamOp];
   roomState.prevScore = [roomState.score[0], roomState.score[1]];
 
-  resetBoard(roomState.room, socket);
+  socket.to(roomState.room).emit("stopDraw");
+  socket.emit("stopDraw");
 };
 
 const goToGuessing = (roomState, socket) => {
   console.log("guessing");
 
   roomState.gameState = "guessing";
+
+  resetBoard(roomState.room, socket);
 
   socket.to(roomState.room).emit("closeCards");
   socket
