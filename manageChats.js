@@ -4,6 +4,8 @@ const manageChats = (socket, rooms) => {
   socket.on("sendMessage", ({ name, room, message }) => {
     const roomState = rooms[room];
 
+    let update = false;
+
     if (roomState !== undefined) {
       const player = roomState.players.find((p) => p.name === name);
 
@@ -30,7 +32,8 @@ const manageChats = (socket, rooms) => {
               newMessage.name = "";
               roomState.score[0] += score;
 
-              updateState(roomState, socket);
+              // updateState(roomState, socket);
+              update = true;
             } else if (
               player.team === 1 &&
               roomState.teams[1].includes(player.name)
@@ -75,7 +78,8 @@ const manageChats = (socket, rooms) => {
               newMessage.name = "";
               roomState.score[1] += score;
 
-              updateState(roomState, socket);
+              // updateState(roomState, socket);
+              update = true;
             }
           }
         } else {
@@ -89,6 +93,8 @@ const manageChats = (socket, rooms) => {
         socket.to(room).emit("updateScore", roomState.score);
         socket.emit("getMessage", newMessage);
         socket.emit("updateScore", roomState.score);
+
+        if (update) updateState(roomState, socket);
       }
     }
   });
