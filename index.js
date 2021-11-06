@@ -5,7 +5,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const drawing = require("./drawing");
 const manageChats = require("./manageChats");
-const { managePlayers, removePlayer } = require("./managePlayers");
+const managePlayers = require("./managePlayers");
 const manageLobby = require("./manageLobby");
 const manageGame = require("./manageGame");
 
@@ -17,11 +17,6 @@ app.use("/", (req, res) => {
   res.send("server is running!!!!!");
 });
 
-// corsOptions = {
-//   cors: true,
-//   origin: "*",
-// };
-
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
@@ -31,28 +26,22 @@ const io = socketIO(server, {
   },
 });
 
-const rooms = [];
-const players = [];
-// const players = [];
+const rooms = {};
 
 io.on("connect", (socket) => {
   console.log(`${socket.id} has connected`);
-  //   socket.emit("initialBoardState", arr);
 
   drawing(socket, rooms);
   manageChats(socket, rooms);
-  managePlayers(socket, players, rooms);
+  // managePlayers(socket, players, rooms);
   manageLobby(socket, rooms);
   manageGame(socket, rooms);
 
-  socket.on("sendInfo", (room, callback) => {
-    console.log(rooms);
-    callback(rooms[room]);
-  });
+  managePlayers(io, socket, rooms);
 
   socket.on("disconnect", () => {
     console.log(`${socket.id} has disconnected`);
-    removePlayer(socket, socket.id, players, rooms);
+    rooms[socket.room]?.removePlayer(socket.id);
   });
 });
 

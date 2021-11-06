@@ -1,28 +1,33 @@
-const { updateState } = require("./gameStates");
-
 const listeners = (socket, rooms) => {
   socket.on("getCards", (room, callback) => {
-    const roomState = rooms[room];
-    callback(roomState?.wordArr);
+    // const roomState = rooms[room];
+    callback(rooms[room]?.wordArr);
   });
 
   socket.on("getScore", (room, callback) => {
-    const roomState = rooms[room];
-    callback(roomState?.score);
+    // const roomState = rooms[room];
+    callback(rooms[room]?.score);
   });
 
   socket.on("getTurn", (room, callback) => {
-    const roomState = rooms[room];
-    callback(roomState?.turn);
+    // const roomState = rooms[room];
+    callback(rooms[room]?.turn);
   });
 
   socket.on("setIndex", ({ room, selected: index }) => {
-    const roomState = rooms[room];
-    if (roomState === undefined) return;
+    // const roomState = rooms[room];
+    // if (roomState === undefined) return;
 
-    if (room === roomState.room && roomState.gameState === "choosing") {
+    // if (room === roomState.room && roomState.gameState === "choosing") {
+    //   roomState.index = index;
+    //   updateState(roomState, socket);
+    // }
+
+    const roomState = rooms[room];
+
+    if (roomState !== undefined && roomState.gameState === "choosing") {
       roomState.index = index;
-      updateState(roomState, socket);
+      roomState.updateState();
     }
   });
 
@@ -30,12 +35,8 @@ const listeners = (socket, rooms) => {
     const roomState = rooms[room];
     const player = roomState?.players?.find((ply) => ply.name == name);
 
-    if (player) {
-      if (player.informer === true) callback(true);
-      else callback(false);
-    } else {
-      callback(false);
-    }
+    if (player) callback(player.isDetective);
+    else callback(false);
   });
 
   socket.on("isMyTurn", ({ room, name }, callback) => {

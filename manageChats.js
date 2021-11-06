@@ -1,5 +1,3 @@
-const { updateState } = require("./gameStates");
-
 const manageChats = (socket, rooms) => {
   socket.on("sendMessage", ({ name, room, message }) => {
     const roomState = rooms[room];
@@ -89,12 +87,12 @@ const manageChats = (socket, rooms) => {
 
         // console.log(roomState.score, roomState.time / 80);
 
-        socket.to(room).emit("getMessage", newMessage);
-        socket.to(room).emit("updateScore", roomState.score);
-        socket.emit("getMessage", newMessage);
-        socket.emit("updateScore", roomState.score);
+        roomState.io.to(room).emit("getMessage", newMessage);
+        roomState.io.to(room).emit("updateScore", roomState.score);
+        // socket.emit("getMessage", newMessage);
+        // socket.emit("updateScore", roomState.score);
 
-        if (update) updateState(roomState, socket);
+        if (update) roomState.updateState();
       }
     }
   });
