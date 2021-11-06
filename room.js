@@ -3,9 +3,9 @@ class Room {
     this.io = io;
     this.room = roomId;
     this.players = [];
-    this.roundTime = 5;
+    this.roundTime = 80;
     this.timer = null;
-    this.rounds = 1;
+    this.rounds = 15;
   }
 
   joinPlayer(socket, name, team, isDetective, isHost) {
