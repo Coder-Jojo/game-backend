@@ -32,7 +32,15 @@ class Room {
   }
 
   removePlayer(socketId) {
+    const player = this.players.find((p) => p.socketId === socketId);
     this.players = this.players.filter((p) => p.socketId !== socketId);
+
+    if (player !== undefined && player.isHost) {
+      if (this.players.length > 0) {
+        this.players[0].isHost = true;
+        this.io.to(this.players[0].socketId).emit("onIsHost", true);
+      }
+    }
 
     this.io.to(this.room).emit("teamsUpdated", this.players);
   }
