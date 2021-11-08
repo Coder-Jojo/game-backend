@@ -48,6 +48,21 @@ const listeners = (socket, rooms) => {
     else callback(false);
   });
 
+  socket.on("getRound", (room, callback) => {
+    const roomState = rooms[room];
+    if (roomState !== undefined) {
+      callback({
+        current: roomState.iteration + 1,
+        total: roomState.rounds + 1,
+      });
+    } else {
+      callback({
+        current: -1,
+        total: -1,
+      });
+    }
+  });
+
   socket.on("joinRunningGame", ({ room, name }) => {
     const roomState = rooms[room];
 
@@ -70,7 +85,7 @@ const listeners = (socket, rooms) => {
 
           const player = roomState.players.find((p) => p.name === name);
           if (player !== undefined && player.isDetective === false)
-            roomState.teams[player.team].push(player.name);
+            roomState?.teams[player.team]?.push(player.name);
         }
       }, 2000);
     }

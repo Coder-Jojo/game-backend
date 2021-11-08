@@ -152,9 +152,26 @@ class Room {
     this.io.to(this.room).emit("updateWordLen", this.wordArr[this.index].size);
     this.io.to(this.room).emit("startDraw");
 
+    this.currentWord = this.index > -1 ? this.wordArr[this.index].word : "";
+
     this.timer = setInterval(() => {
       this.time -= 1;
       this.io.to(this.room).emit("updateTime", this.time);
+
+      let offset = -1;
+      if (this.time === 50) offset = 0;
+      else if (this.time === 25) offset = 3;
+      else if (this.time === 35) offset = 6;
+      else if (this.time === 60) offset = 9;
+
+      if (offset !== -1) {
+        const index = Math.floor(Math.random() * 3);
+        if (offset + index < this.currentWord.length)
+          this.io.to(this.room).emit("onHint", {
+            index: offset + index,
+            letter: this.currentWord[offset + index],
+          });
+      }
     }, 1000);
 
     const currentIteration = this.iteration;

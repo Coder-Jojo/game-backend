@@ -6,6 +6,8 @@ const manageChats = (socket, rooms) => {
 
     if (roomState !== undefined) {
       const player = roomState.players.find((p) => p.name === name);
+      const currentWord =
+        roomState.index > -1 ? roomState.wordArr[roomState.index].word : "";
 
       if (player !== undefined) {
         const newMessage = {
@@ -14,10 +16,7 @@ const manageChats = (socket, rooms) => {
           name: name,
         };
 
-        if (
-          roomState.index !== -1 &&
-          message == roomState.wordArr[roomState.index].word
-        ) {
+        if (roomState.index !== -1 && message == currentWord) {
           if (roomState.turn === 0 && roomState.gameState === "guessing") {
             if (player.team === 0 && roomState.teams[0].includes(player.name)) {
               const score = Math.ceil(
@@ -93,6 +92,26 @@ const manageChats = (socket, rooms) => {
         // socket.emit("updateScore", roomState.score);
 
         if (update) roomState.updateState();
+        else if (currentWord.length === message.length) {
+          let sameLetters = 0;
+          for (let i = 0; i < currentWord.length; i++) {
+            if (currentWord[i] === message[i]) sameLetters++;
+          }
+
+          if (sameLetters < message.length) {
+            if (message.length === 3 && sameLetters === 2) {
+              socket.emit("getMessage", {
+                msg: `'${message}' is close`,
+                type: 4,
+              });
+            } else if (4 * sameLetters >= 3 * currentWord.length) {
+              socket.emit("getMessage", {
+                msg: `'${message}' is close.`,
+                type: 4,
+              });
+            }
+          }
+        }
       }
     }
   });
